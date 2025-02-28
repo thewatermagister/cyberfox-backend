@@ -14,7 +14,7 @@ const MIN_REQUIRED_TOKENS = 750000;
 app.use(cors());
 app.use(express.json());
 
-/** ✅ **Endpoint for Fetching CyberFox Token Balance** **/
+/** ✅ **Endpoint for Fetching CyberFox Token Balance (Fixed)** **/
 app.post("/validate-token", async (req, res) => {
     const { wallet, apiKey } = req.body;
 
@@ -22,10 +22,10 @@ app.post("/validate-token", async (req, res) => {
     console.log("✅ Wallet Address:", wallet);
     console.log("✅ API Key:", apiKey ? "✅ Provided" : "❌ Not Provided");
 
-    if (!wallet) return res.status(400).json({ error: "Wallet address required." });
+    if (!wallet) return res.status(400).json({ success: false, error: "Wallet address required." });
     if (!apiKey || apiKey.trim() === "") {
         console.error("❌ Missing API Key in request.");
-        return res.status(400).json({ error: "API key is missing. Please enter a valid API key." });
+        return res.status(400).json({ success: false, error: "API key is missing. Please enter a valid API key." });
     }
 
     const SOLANA_RPC_URL = `https://rpc.helius.xyz/?api-key=${apiKey}`;
@@ -54,10 +54,10 @@ app.post("/validate-token", async (req, res) => {
 
         console.log(`✅ CyberFox Token Balance: ${tokenBalance}`);
 
-        // ✅ **Enforce Token Gating**
+        // ✅ **ENFORCE TOKEN GATING - STRICTLY BLOCK USERS BELOW THE THRESHOLD**
         if (tokenBalance < MIN_REQUIRED_TOKENS) {
             console.warn(`❌ Access Denied: User only has ${tokenBalance} CyberFox tokens.`);
-            return res.status(403).json({ error: "❌ Insufficient CyberFox tokens. Buy more to enable the extension." });
+            return res.status(403).json({ success: false, error: "❌ Insufficient CyberFox tokens. Buy more to enable the extension." });
         }
 
         console.log(`✅ Access Granted: User has ${tokenBalance} CyberFox tokens.`);
@@ -66,7 +66,7 @@ app.post("/validate-token", async (req, res) => {
 
     } catch (error) {
         console.error("❌ Error fetching CyberFox token balance:", error);
-        return res.status(500).json({ error: "Internal Server Error while fetching token balance." });
+        return res.status(500).json({ success: false, error: "Internal Server Error while fetching token balance." });
     }
 });
 
@@ -82,12 +82,12 @@ app.post("/validate-sol", async (req, res) => {
         // ✅ Validate Inputs
         if (!wallet || typeof wallet !== "string" || wallet.trim() === "") {
             console.error("❌ Invalid or missing wallet address.");
-            return res.status(400).json({ error: "Invalid wallet address." });
+            return res.status(400).json({ success: false, error: "Invalid wallet address." });
         }
 
         if (!apiKey || typeof apiKey !== "string" || apiKey.trim() === "") {
             console.error("❌ Missing API Key in request.");
-            return res.status(400).json({ error: "API key is missing. Please enter a valid API key." });
+            return res.status(400).json({ success: false, error: "API key is missing. Please enter a valid API key." });
         }
 
         const SOLANA_RPC_URL = `https://rpc.helius.xyz/?api-key=${apiKey}`;
@@ -110,7 +110,7 @@ app.post("/validate-sol", async (req, res) => {
         // ✅ Ensure valid API response
         if (!solData || !solData.result || typeof solData.result.value === "undefined") {
             console.error("❌ Unexpected API response format.");
-            return res.status(500).json({ error: "Invalid API response. Please check the API key and wallet address." });
+            return res.status(500).json({ success: false, error: "Invalid API response. Please check the API key and wallet address." });
         }
 
         // ✅ Convert from lamports to SOL
@@ -122,7 +122,7 @@ app.post("/validate-sol", async (req, res) => {
 
     } catch (error) {
         console.error("❌ Error fetching SOL balance:", error);
-        return res.status(500).json({ error: "Internal Server Error while fetching SOL balance." });
+        return res.status(500).json({ success: false, error: "Internal Server Error while fetching SOL balance." });
     }
 });
 
