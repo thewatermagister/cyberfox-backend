@@ -8,12 +8,8 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8080; // Railway assigns PORT automatically
 
-app.listen(PORT, "0.0.0.0", () => {
-    console.log(`✅ Server running on port ${PORT}`);
-});
-
 const TOKEN_MINT = "8JRYGtJ3DueTTQvhD8atiDgycCcXYQq76f6rzK5Hpump"; // CyberFox Token Mint
-const MIN_REQUIRED_TOKENS = 7500;
+const MIN_REQUIRED_TOKENS = 750000;
 
 app.use(cors());
 app.use(express.json());
@@ -24,7 +20,7 @@ app.post("/validate-token", async (req, res) => {
 
     console.log("🔹 Token Request Received:");
     console.log("✅ Wallet Address:", wallet);
-    console.log("✅ API Key:", apiKey ? apiKey : "❌ No API Key Provided");
+    console.log("✅ API Key:", apiKey ? "✅ Provided" : "❌ Not Provided");
 
     if (!wallet) return res.status(400).json({ error: "Wallet address required." });
     if (!apiKey || apiKey.trim() === "") {
@@ -58,7 +54,7 @@ app.post("/validate-token", async (req, res) => {
 
         console.log(`✅ CyberFox Token Balance: ${tokenBalance}`);
 
-        // ✅ **ENFORCE TOKEN GATING - BLOCK USERS BELOW # TOKENS**
+        // ✅ **Enforce Token Gating**
         if (tokenBalance < MIN_REQUIRED_TOKENS) {
             console.warn(`❌ Access Denied: User only has ${tokenBalance} CyberFox tokens.`);
             return res.status(403).json({ error: "❌ Insufficient CyberFox tokens. Buy more to enable the extension." });
@@ -81,7 +77,7 @@ app.post("/validate-sol", async (req, res) => {
 
         console.log("🔹 SOL Request Received:");
         console.log("✅ Wallet Address:", wallet);
-        console.log("✅ API Key:", apiKey ? apiKey : "❌ No API Key Provided");
+        console.log("✅ API Key:", apiKey ? "✅ Provided" : "❌ Not Provided");
 
         // ✅ Validate Inputs
         if (!wallet || typeof wallet !== "string" || wallet.trim() === "") {
@@ -130,5 +126,5 @@ app.post("/validate-sol", async (req, res) => {
     }
 });
 
-// ✅ Start the server
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+// ✅ **Start the server (ONLY ONCE, at the BOTTOM)**
+app.listen(PORT, "0.0.0.0", () => console.log(`✅ Server running on port ${PORT}`));
