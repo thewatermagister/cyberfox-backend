@@ -9,8 +9,8 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 8080; // Railway assigns PORT automatically
 
-const TOKEN_MINT = "CyFoxoQhcjJFQJtz32SaYZFUfs1xLMXoXz3nBSytGvcD"; // CyberFox Token Mint
-const MIN_REQUIRED_TOKENS = 750000;
+const TOKEN_MINT = "8JRYGtJ3DueTTQvhD8atiDgycCcXYQq76f6rzK5Hpump"; // CyberFox Token Mint
+const MIN_REQUIRED_TOKENS = 750;
 
 app.use(cors());
 app.use(express.json());
