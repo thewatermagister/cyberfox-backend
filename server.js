@@ -71,21 +71,26 @@ app.post("/validate-token", async (req, res) => {
 
 /** ✅ **Endpoint for Fetching SOL Balance** **/
 app.post("/validate-sol", async (req, res) => {
-    const { wallet, apiKey } = req.body;
-
-    console.log("🔹 SOL Request Received:");
-    console.log("✅ Wallet Address:", wallet);
-    console.log("✅ API Key:", apiKey ? apiKey : "❌ No API Key Provided");
-
-    if (!wallet) return res.status(400).json({ error: "Wallet address required." });
-    if (!apiKey || apiKey.trim() === "") {
-        console.error("❌ Missing API Key in request.");
-        return res.status(400).json({ error: "API key is missing. Please enter a valid API key." });
-    }
-
-    const SOLANA_RPC_URL = `https://rpc.helius.xyz/?api-key=${apiKey}`;
-
     try {
+        const { wallet, apiKey } = req.body;
+
+        console.log("🔹 SOL Request Received:");
+        console.log("✅ Wallet Address:", wallet);
+        console.log("✅ API Key:", apiKey ? apiKey : "❌ No API Key Provided");
+
+        // ✅ Validate Inputs
+        if (!wallet || typeof wallet !== "string" || wallet.trim() === "") {
+            console.error("❌ Invalid or missing wallet address.");
+            return res.status(400).json({ error: "Invalid wallet address." });
+        }
+
+        if (!apiKey || typeof apiKey !== "string" || apiKey.trim() === "") {
+            console.error("❌ Missing API Key in request.");
+            return res.status(400).json({ error: "API key is missing. Please enter a valid API key." });
+        }
+
+        const SOLANA_RPC_URL = `https://rpc.helius.xyz/?api-key=${apiKey}`;
+
         // ✅ Fetch SOL Balance
         const solResponse = await fetch(SOLANA_RPC_URL, {
             method: "POST",
@@ -101,10 +106,14 @@ app.post("/validate-sol", async (req, res) => {
         const solData = await solResponse.json();
         console.log("🔹 Helius API SOL Response:", JSON.stringify(solData, null, 2));
 
-        let solBalance = 0;
-        if (solData.result && typeof solData.result.value !== "undefined") {
-            solBalance = (solData.result.value / 1e9).toFixed(3); // Convert from lamports to SOL
+        // ✅ Ensure valid API response
+        if (!solData || !solData.result || typeof solData.result.value === "undefined") {
+            console.error("❌ Unexpected API response format.");
+            return res.status(500).json({ error: "Invalid API response. Please check the API key and wallet address." });
         }
+
+        // ✅ Convert from lamports to SOL
+        let solBalance = (solData.result.value / 1e9).toFixed(3);
 
         console.log(`✅ SOL Balance for ${wallet}: ${solBalance} SOL`);
 
