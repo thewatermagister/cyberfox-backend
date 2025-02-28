@@ -2,7 +2,7 @@ import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";
 import dotenv from "dotenv";
-import rateLimit from "express-rate-limit";  // ✅ Import Rate Limiting
+import rateLimit from "express-rate-limit"; // ✅ Import Rate Limiting
 
 dotenv.config();
 
@@ -15,19 +15,21 @@ const MIN_REQUIRED_TOKENS = 750;
 app.use(cors());
 app.use(express.json());
 
-// ✅ **Apply Rate Limiting (5 requests per minute per IP)**
-const limiter = rateLimit({
+// ✅ **Rate Limiting for API Protection**
+const solLimiter = rateLimit({
     windowMs: 60 * 1000, // 1 minute
     max: 5, // Limit each IP to 5 requests per minute
-    message: { error: "❌ Too many requests. Please wait before checking again." }
+    message: { error: "❌ Too many SOL balance requests. Slow down!" }
 });
 
-// ✅ Apply rate limiters to API endpoints
-app.use("/validate-token", limiter);
-app.use("/validate-sol", limiter);
+const tokenLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 1, // Only allow 1 token balance check per minute per IP
+    message: { error: "❌ Too many token balance requests. Please wait before checking again." }
+});
 
-/** ✅ **Endpoint for Fetching CyberFox Token Balance** **/
-app.post("/validate-token", async (req, res) => {
+// ✅ **Endpoint for Fetching CyberFox Token Balance** (1 request per minute)
+app.post("/validate-token", tokenLimiter, async (req, res) => {
     const { wallet, apiKey } = req.body;
 
     console.log("🔹 Token Request Received:");
@@ -82,8 +84,8 @@ app.post("/validate-token", async (req, res) => {
     }
 });
 
-/** ✅ **Endpoint for Fetching SOL Balance** **/
-app.post("/validate-sol", async (req, res) => {
+/** ✅ **Endpoint for Fetching SOL Balance** (5 requests per minute) **/
+app.post("/validate-sol", solLimiter, async (req, res) => {
     try {
         const { wallet, apiKey } = req.body;
 
