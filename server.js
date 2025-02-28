@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8080;
 const TOKEN_MINT = "CyFoxoQhcjJFQJtz32SaYZFUfs1xLMXoXz3nBSytGvcD"; // CyberFox Token Mint
 const MIN_REQUIRED_TOKENS = 750000;
 
