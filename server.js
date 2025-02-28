@@ -2,21 +2,29 @@ import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";
 import dotenv from "dotenv";
+import rateLimit from "express-rate-limit";  // ✅ Import Rate Limiting
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 8080; // Railway assigns PORT automatically
 
-app.listen(PORT, "0.0.0.0", () => {
-    console.log(`✅ Server running on port ${PORT}`);
-});
-
 const TOKEN_MINT = "CyFoxoQhcjJFQJtz32SaYZFUfs1xLMXoXz3nBSytGvcD"; // CyberFox Token Mint
 const MIN_REQUIRED_TOKENS = 750000;
 
 app.use(cors());
 app.use(express.json());
+
+// ✅ **Apply Rate Limiting (5 requests per minute per IP)**
+const limiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 5, // Limit each IP to 5 requests per minute
+    message: { error: "❌ Too many requests. Please wait before checking again." }
+});
+
+// ✅ Apply rate limiters to API endpoints
+app.use("/validate-token", limiter);
+app.use("/validate-sol", limiter);
 
 /** ✅ **Endpoint for Fetching CyberFox Token Balance** **/
 app.post("/validate-token", async (req, res) => {
