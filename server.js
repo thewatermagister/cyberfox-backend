@@ -2,39 +2,29 @@ import express from "express";
 import fetch from "node-fetch";
 import cors from "cors";
 import dotenv from "dotenv";
-import rateLimit from "express-rate-limit"; // ✅ Import Rate Limiting
 
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 8080; // Railway assigns PORT automatically
 
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`✅ Server running on port ${PORT}`);
+});
+
 const TOKEN_MINT = "8JRYGtJ3DueTTQvhD8atiDgycCcXYQq76f6rzK5Hpump"; // CyberFox Token Mint
-const MIN_REQUIRED_TOKENS = 750;
+const MIN_REQUIRED_TOKENS = 7500;
 
 app.use(cors());
 app.use(express.json());
 
-// ✅ **Rate Limiting for API Protection**
-const solLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 5, // Limit each IP to 5 requests per minute
-    message: { error: "❌ Too many SOL balance requests. Slow down!" }
-});
-
-const tokenLimiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minute
-    max: 1, // Only allow 1 token balance check per minute per IP
-    message: { error: "❌ Too many token balance requests. Please wait before checking again." }
-});
-
-// ✅ **Endpoint for Fetching CyberFox Token Balance** (1 request per minute)
-app.post("/validate-token", tokenLimiter, async (req, res) => {
+/** ✅ **Endpoint for Fetching CyberFox Token Balance** **/
+app.post("/validate-token", async (req, res) => {
     const { wallet, apiKey } = req.body;
 
-    console.log("\n🔹 [TOKEN CHECK] Token Request Received:");
+    console.log("🔹 Token Request Received:");
     console.log("✅ Wallet Address:", wallet);
-    console.log("✅ API Key:", apiKey ? "✔️ Provided" : "❌ Not Provided");
+    console.log("✅ API Key:", apiKey ? apiKey : "❌ No API Key Provided");
 
     if (!wallet) return res.status(400).json({ error: "Wallet address required." });
     if (!apiKey || apiKey.trim() === "") {
@@ -58,27 +48,23 @@ app.post("/validate-token", tokenLimiter, async (req, res) => {
         });
 
         const tokenData = await tokenResponse.json();
-        console.log("\n🔹 [API RESPONSE] Helius Token Data:", JSON.stringify(tokenData, null, 2));
-
-        if (!tokenData.result || !Array.isArray(tokenData.result.value)) {
-            console.error("❌ Unexpected API response format.");
-            return res.status(500).json({ error: "Invalid API response. Please check the API key and wallet address." });
-        }
+        console.log("🔹 Helius API Token Response:", JSON.stringify(tokenData, null, 2));
 
         let tokenBalance = 0;
-        if (tokenData.result.value.length > 0) {
+
+        if (tokenData.result && tokenData.result.value.length > 0) {
             tokenBalance = parseFloat(tokenData.result.value[0].account.data.parsed.info.tokenAmount.uiAmount);
         }
 
-        console.log(`✅ [TOKEN BALANCE] CyberFox Token Balance: ${tokenBalance}`);
+        console.log(`✅ CyberFox Token Balance: ${tokenBalance}`);
 
-        // ✅ **ENFORCE TOKEN GATING - BLOCK USERS BELOW MIN_REQUIRED_TOKENS**
+        // ✅ **ENFORCE TOKEN GATING - BLOCK USERS BELOW # TOKENS**
         if (tokenBalance < MIN_REQUIRED_TOKENS) {
-            console.warn(`❌ [ACCESS DENIED] User only has ${tokenBalance} CyberFox tokens.`);
+            console.warn(`❌ Access Denied: User only has ${tokenBalance} CyberFox tokens.`);
             return res.status(403).json({ error: "❌ Insufficient CyberFox tokens. Buy more to enable the extension." });
         }
 
-        console.log(`✅ [ACCESS GRANTED] User has ${tokenBalance} CyberFox tokens.`);
+        console.log(`✅ Access Granted: User has ${tokenBalance} CyberFox tokens.`);
 
         return res.json({ success: true, tokenBalance });
 
@@ -88,14 +74,14 @@ app.post("/validate-token", tokenLimiter, async (req, res) => {
     }
 });
 
-/** ✅ **Endpoint for Fetching SOL Balance** (5 requests per minute) **/
-app.post("/validate-sol", solLimiter, async (req, res) => {
+/** ✅ **Endpoint for Fetching SOL Balance** **/
+app.post("/validate-sol", async (req, res) => {
     try {
         const { wallet, apiKey } = req.body;
 
-        console.log("\n🔹 [SOL CHECK] SOL Request Received:");
+        console.log("🔹 SOL Request Received:");
         console.log("✅ Wallet Address:", wallet);
-        console.log("✅ API Key:", apiKey ? "✔️ Provided" : "❌ Not Provided");
+        console.log("✅ API Key:", apiKey ? apiKey : "❌ No API Key Provided");
 
         // ✅ Validate Inputs
         if (!wallet || typeof wallet !== "string" || wallet.trim() === "") {
@@ -123,7 +109,7 @@ app.post("/validate-sol", solLimiter, async (req, res) => {
         });
 
         const solData = await solResponse.json();
-        console.log("\n🔹 [API RESPONSE] Helius SOL Data:", JSON.stringify(solData, null, 2));
+        console.log("🔹 Helius API SOL Response:", JSON.stringify(solData, null, 2));
 
         // ✅ Ensure valid API response
         if (!solData || !solData.result || typeof solData.result.value === "undefined") {
@@ -134,7 +120,7 @@ app.post("/validate-sol", solLimiter, async (req, res) => {
         // ✅ Convert from lamports to SOL
         let solBalance = (solData.result.value / 1e9).toFixed(3);
 
-        console.log(`✅ [SOL BALANCE] SOL Balance for ${wallet}: ${solBalance} SOL`);
+        console.log(`✅ SOL Balance for ${wallet}: ${solBalance} SOL`);
 
         return res.json({ success: true, solBalance });
 
