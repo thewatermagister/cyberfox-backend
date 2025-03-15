@@ -9,7 +9,7 @@ const app = express();
 const PORT = process.env.PORT || 8080; // Railway assigns PORT automatically
 
 const TOKEN_MINT = "CyFoxoQhcjJFQJtz32SaYZFUfs1xLMXoXz3nBSytGvcD"; // CyberFox Token Mint
-const MIN_REQUIRED_TOKENS = 750000;
+const MIN_REQUIRED_TOKENS = 1;
 
 app.use(cors());
 app.use(express.json());
